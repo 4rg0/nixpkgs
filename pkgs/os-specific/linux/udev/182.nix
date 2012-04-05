@@ -1,23 +1,23 @@
 { stdenv, fetchurl, gperf, pkgconfig, glib, acl
-, libusb, usbutils, pciutils }:
+, libusb, usbutils, pciutils, libuuid, kmod }:
 
 assert stdenv ? glibc;
 
 stdenv.mkDerivation rec {
-  name = "udev-173";
+  name = "udev-182";
 
   src = fetchurl {
     url = "mirror://kernel/linux/utils/kernel/hotplug/${name}.tar.bz2";
-    sha256 = "1bxadi4bi11v8ipzj22wknv8hsb0wgdb99bx3w9w33rgl4aq78bh";
+    sha256 = "143qvm0kij26j2l5icnch4x38fajys6li7j0c5mpwi6kqmc8hqx0";
   };
 
-  buildInputs = [ gperf pkgconfig glib acl libusb usbutils ];
+  buildInputs = [ gperf pkgconfig glib acl libusb usbutils libuuid kmod ];
 
   configureFlags =
     ''
       --with-pci-ids-path=${pciutils}/share/pci.ids
-      --enable-udev_acl --enable-edd
-      --disable-introspection --libexecdir=$(out)/lib/udev
+      --enable-rule_generator
+      --disable-introspection --libexecdir=$(out)/lib
       --with-firmware-path=/root/test-firmware:/var/run/current-system/firmware
     '';
 
@@ -45,10 +45,6 @@ stdenv.mkDerivation rec {
     '';
 
   patches = [ ./custom-rules.patch ] ++
-    [(fetchurl {
-      url = https://bugs.archlinux.org/task/25356?getfile=7281;
-      sha256 = "01xib1pfdbwacgx8dqxgrf67a0mwkpm4kxy9f9v3df93v0m4pmbm";
-    })] ++
     stdenv.lib.optional (stdenv.system == "armv5tel-linux") ./pre-accept4-kernel.patch;
 
   meta = {
