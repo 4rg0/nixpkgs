@@ -1,4 +1,8 @@
-{ stdenv, fetchurl, pkgconfig, gettext, x11, glib, cairo, libpng }:
+{ stdenv, fetchurl, pkgconfig, gettext, x11, glib, cairo, libpng
+, enableIntrospection ? false, gobjectIntrospection ? null
+}:
+
+assert enableIntrospection -> gobjectIntrospection != null;
 
 stdenv.mkDerivation rec {
   name = "pango-1.30.1";
@@ -12,7 +16,8 @@ stdenv.mkDerivation rec {
 
   buildNativeInputs = [ pkgconfig ];
 
-  propagatedBuildInputs = [ x11 glib cairo libpng ];
+  propagatedBuildInputs = [ x11 glib cairo libpng ]
+    ++ stdenv.lib.optional enableIntrospection gobjectIntrospection;
 
   enableParallelBuilding = true;
 
