@@ -8545,6 +8545,13 @@ let
 
   oxygen_gtk = callPackage ../misc/themes/gtk2/oxygen-gtk { };
 
+  unity = let
+    callPackage = newScope pkgs.unity;
+    unityPkgs = import ../desktops/unity {
+      inherit callPackage pkgs;
+    };
+  in recurseIntoAttrs unityPkgs;
+
   xfce = xfce48;
 
   xfce48 = recurseIntoAttrs
