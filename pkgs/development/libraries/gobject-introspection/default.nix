@@ -17,6 +17,8 @@ stdenv.mkDerivation rec {
 
   patches = ./gir_nix_path.patch;
 
+  setupHook = ./setup-hook.sh;
+
   postInstall = "rm -rf $out/share/gtk-doc";
 
   meta = with stdenv.lib; {
