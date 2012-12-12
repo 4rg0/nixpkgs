@@ -1,4 +1,8 @@
-{ stdenv, fetchurl, pkgconfig, glib, libtiff, libjpeg, libpng, libX11, xz, jasper }:
+{ stdenv, fetchurl, pkgconfig, glib, libtiff, libjpeg, libpng, libX11, xz, jasper
+, enableIntrospection ? false, gobjectIntrospection ? null
+}:
+
+assert enableIntrospection -> gobjectIntrospection != null;
 
 stdenv.mkDerivation rec {
   name = "gdk-pixbuf-2.26.1";
@@ -9,7 +13,8 @@ stdenv.mkDerivation rec {
   };
 
   # !!! We might want to factor out the gdk-pixbuf-xlib subpackage.
-  buildInputs = [ libX11 ];
+  buildInputs = [ libX11 ]
+             ++ stdenv.lib.optional enableIntrospection gobjectIntrospection;
 
   buildNativeInputs = [ pkgconfig ];
 
