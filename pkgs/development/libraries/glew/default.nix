@@ -11,7 +11,7 @@ stdenv.mkDerivation rec {
   buildInputs = [ mesa x11 libXmu libXi ];
 
   installPhase = "
-    GLEW_DEST=\$out make install
+    GLEW_DEST=\$out make install.all
     mkdir -pv \$out/share/doc/glew
     cp -r README.txt LICENSE.txt doc  \$out/share/doc/glew
   ";
