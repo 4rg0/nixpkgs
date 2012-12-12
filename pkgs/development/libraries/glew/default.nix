@@ -15,8 +15,14 @@ stdenv.mkDerivation rec {
     mkdir -pv \$out/share/doc/glew
     cp -r README.txt LICENSE.txt doc  \$out/share/doc/glew
   ";
-  
-  meta = { 
+
+  postFixup = ''
+    if [ -d "$out/lib64" ]; then
+      ln -s lib64 "$out/lib"
+    fi
+  '';
+
+  meta = {
     description = "Cross-platform open-source C/C++ extension loading library";
     homepage = http://glew.sourceforge.net/;
     license = ["BSD" "GLX" "SGI-B" "GPL2"]; # License description copied from gentoo-1.4.0 
