@@ -15,6 +15,8 @@ stdenv.mkDerivation rec {
     sha256 = "80e211ea95404fc7c5fa3b04ba69ee0b29af70847af315155ab06b8cff832c85";
   };
 
+  patches = ./gir_nix_path.patch;
+
   postInstall = "rm -rf $out/share/gtk-doc";
 
   meta = with stdenv.lib; {

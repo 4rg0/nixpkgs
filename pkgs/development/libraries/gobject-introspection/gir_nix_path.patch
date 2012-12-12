@@ -1,0 +1,79 @@
+Allow to set NIX_GIR_PATH as an environment variable to specify GIR search paths
+delimited by colons.
+
+diff --git a/giscanner/scannermain.py b/giscanner/scannermain.py
+index 794cede..9a8c25f 100755
+--- a/giscanner/scannermain.py
++++ b/giscanner/scannermain.py
+@@ -64,6 +64,12 @@ def get_windows_option_group(parser):
+ 
+     return group
+ 
++def _get_nix_gir_path():
++    nixgir = os.environ.get('NIX_GIR_PATH', None)
++    if nixgir is None:
++        return []
++    return nixgir.split(':')
++
+ def _get_option_parser():
+     parser = optparse.OptionParser('%prog [options] sources')
+     parser.add_option('', "--quiet",
+@@ -84,7 +90,8 @@ def _get_option_parser():
+                             "when building multiple .gir files inside a "
+                             "single module."""))
+     parser.add_option("", "--add-include-path",
+-                      action="append", dest="include_paths", default=[],
++                      action="append", dest="include_paths",
++                      default=_get_nix_gir_path(),
+                       help="include paths for other GIR files")
+     parser.add_option("", "--program",
+                       action="store", dest="program", default=None,
+diff --git a/tools/compiler.c b/tools/compiler.c
+index 7e17f1b..6cf12ad 100644
+--- a/tools/compiler.c
++++ b/tools/compiler.c
+@@ -147,6 +147,10 @@ main (int argc, char ** argv)
+   GError *error = NULL;
+   GIrParser *parser;
+   GIrModule *module;
++  GList *l, *includelist = NULL;
++  gchar **all_includes;
++  const char *envp;
++  gchar *gp_start, *gp_end, *girpath;
+   gint i;
+   g_typelib_check_sanity ();
+ 
+@@ -182,7 +186,32 @@ main (int argc, char ** argv)
+ 
+   parser = _g_ir_parser_new ();
+ 
+-  _g_ir_parser_set_includes (parser, (const char*const*) includedirs);
++  if ((envp = g_getenv("NIX_GIR_PATH")) == NULL) {
++    _g_ir_parser_set_includes (parser, (const char*const*) includedirs);
++  } else {
++    girpath = gp_start = g_strdup(envp);
++    while (gp_start) {
++      if ((gp_end = strchr(gp_start, ':')) != NULL)
++        *(gp_end++) = '\0';
++      g_irepository_prepend_search_path(gp_start);
++      includelist = g_list_append(includelist, gp_start);
++      gp_start = gp_end;
++    }
++
++    if (includedirs != NULL)
++      for (i = 0; includedirs[i]; i++)
++        includelist = g_list_append(includelist, includedirs[i]);
++
++    all_includes = g_malloc0(sizeof(gchar*) * (g_list_length(includelist) + 1));
++
++    for (i = 0, l = includelist; l; l = l->next)
++      all_includes[i++] = g_strdup(l->data);
++
++    g_list_free(includelist);
++    g_free(girpath);
++
++    _g_ir_parser_set_includes (parser, (const char*const*) all_includes);
++  }
+ 
+   module = _g_ir_parser_parse_file (parser, input[0], &error);
+   if (module == NULL) 
