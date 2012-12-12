@@ -2,12 +2,24 @@
 , gdk_pixbuf, xz
 , xineramaSupport ? true
 , cupsSupport ? true, cups ? null
+, enableIntrospection ? false, gobjectIntrospection ? null
 }:
 
 assert xineramaSupport -> xlibs.libXinerama != null;
 assert cupsSupport -> cups != null;
+assert enableIntrospection -> gobjectIntrospection != null;
 
-stdenv.mkDerivation rec {
+let
+  pixbufGir = gdk_pixbuf.override {
+    inherit enableIntrospection;
+  };
+  pangoGir = pango.override {
+    inherit enableIntrospection;
+  };
+  atkGir = atk.override {
+    inherit enableIntrospection;
+  };
+in stdenv.mkDerivation rec {
   name = "gtk+-3.2.4";
 
   src = fetchurl {
@@ -20,11 +32,12 @@ stdenv.mkDerivation rec {
   buildNativeInputs = [ perl pkgconfig ];
 
   propagatedBuildInputs =
-    [ xlibs.xlibs glib atk pango gdk_pixbuf cairo
+    [ xlibs.xlibs glib pangoGir pixbufGir atkGir cairo
       xlibs.libXrandr xlibs.libXrender xlibs.libXcomposite xlibs.libXi
     ]
     ++ stdenv.lib.optional xineramaSupport xlibs.libXinerama
-    ++ stdenv.lib.optionals cupsSupport [ cups ];
+    ++ stdenv.lib.optionals cupsSupport [ cups ]
+    ++ stdenv.lib.optional enableIntrospection gobjectIntrospection;
 
   postInstall = "rm -rf $out/share/gtk-doc";
 
