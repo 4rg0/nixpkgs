@@ -3322,6 +3322,9 @@ let
     inherit fetchurl stdenv aspell which;
   });
 
+  at_spi2_core = callPackage ../development/libraries/at-spi2/core.nix { };
+  at_spi2_atk = callPackage ../development/libraries/at-spi2/atk.nix { };
+
   aterm = aterm25;
 
   aterm25 = callPackage ../development/libraries/aterm/2.5.nix { };
