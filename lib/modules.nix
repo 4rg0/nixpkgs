@@ -165,6 +165,9 @@ rec {
       value = (opt.apply or id) merged;
     in opt //
       { value = addErrorContext "while evaluating the option `${showOption loc}':" value;
+        # Note that definitions may contain undischarged mkMap properties,
+        # as mkMap can only be discharged in the merge function of the
+        # relevant (mappable) type.
         definitions = map (def: def.value) defsFinal;
         isDefined = defsFinal != [];
         files = map (def: def.file) defsFinal;
@@ -179,9 +182,12 @@ rec {
 
       # Merge everything, but check that types match first
       mergedValue = fold (def: res:
-            if type.check def.value then res
-            else throw "The option value `${showOption loc}' in `${def.file}' is not a ${type.name}.")
-            (type.merge loc defsFinal) defsFinal;
+        if def.value._type or "" == "map"
+          then if type.mappable then res
+            else throw "Option value `${showOption loc}' in `${def.file}' is a mkMap but ${type.name} is not mappable"
+          else if type.check def.value then res
+            else throw "The option value `${showOption loc}' in `${def.file}' is not a ${type.name}."
+      ) (type.merge loc defsFinal) defsFinal;
   };
 
   /* Given a config set, expand mkMerge properties, and push down the
@@ -306,6 +312,16 @@ rec {
   mkVMOverride = mkOverride 10; # used by ‘nixos-rebuild build-vm’
 
   mkFixStrictness = id; # obsolete, no-op
+
+  # Map a function, which takes an index ((defnNum, index) for lists, attrname
+  # for sets, etc) and returns a value to be merged with the other values
+  # defined for that index, over a collection. This can for example be used to
+  # apply some config to *every* submodule in an attrsOf submodule without
+  # needing to know which attrs are actually defined elsewhere
+  mkMap = f:
+    { _type = "map";
+      inherit f;
+    };
 
   # FIXME: Add mkOrder back in. It's not currently used anywhere in
   # NixOS, but it should be useful.

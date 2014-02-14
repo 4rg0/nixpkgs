@@ -37,9 +37,11 @@ in rec {
     , # Return a flat list of sub-options.  Used to generate
       # documentation.
       getSubOptions ? prefix: {}
+    , # A mappable type can handle mkMap defs when merging
+      mappable ? false
     }:
     { _type = "option-type";
-      inherit name check merge getSubOptions;
+      inherit name check merge getSubOptions mappable;
     };
 
 
@@ -110,21 +112,42 @@ in rec {
       name = "list of ${elemType.name}s";
       check = isList;
       merge = loc: defs:
-        concatLists (imap (n: def: imap (m: def':
+        let
+          nonMaps = filter (d: d.value._type or "" != "map") defs;
+          maps = filter (d: d.value._type or "" == "map") defs;
+          mapResults = fold (m: imap (x: l: imap (y: l: l ++ [ {
+            inherit (m) file;
+            value = m.value.f x y;
+          } ]) l))
+            (map (d: map (x: []) d.value) nonMaps) maps;
+        in concatLists (imap (n: def: imap (m: def':
           innerMerge (loc ++ ["[${toString n}-${toString m}]"]) elemType
-            [{ inherit (def) file; value = def'; }]) def.value) defs);
+            ([{ inherit (def) file; value = def'; }] ++ elemAt (elemAt mapResults (n - 1)) (m - 1))
+        ) def.value) nonMaps);
       getSubOptions = prefix: elemType.getSubOptions (prefix ++ ["*"]);
+      mappable = true;
     };
 
     attrsOf = elemType: mkOptionType {
       name = "attribute set of ${elemType.name}s";
       check = isAttrs;
       merge = loc: defs:
-        zipAttrsWith (name: innerMerge (loc ++ [name]) elemType)
+        let
+          nonMaps = filter (d: d.value._type or "" != "map") defs;
+          maps = filter (d: d.value._type or "" == "map") defs;
+          names = concatMap (d: attrNames d.value) nonMaps;
+          mapResults = listToAttrs (map (name: {
+            inherit name;
+            value = map (m: { inherit (m) file; value = m.value.f name; }) maps;
+          }) names);
+        in zipAttrsWith (name: defs:
+          innerMerge (loc ++ [name]) elemType (defs ++ getAttr name mapResults)
+        )
           # Push down position info.
           (map (def: listToAttrs (mapAttrsToList (n: def':
-            { name = n; value = { inherit (def) file; value = def'; }; }) def.value)) defs);
+            { name = n; value = { inherit (def) file; value = def'; }; }) def.value)) nonMaps);
       getSubOptions = prefix: elemType.getSubOptions (prefix ++ ["<name>"]);
+      mappable = true;
     };
 
     # List or attribute set of ...
@@ -148,6 +171,8 @@ in rec {
         check = x: isList x || isAttrs x;
         merge = loc: defs: attrOnly.merge loc (imap convertIfList defs);
         getSubOptions = prefix: elemType.getSubOptions (prefix ++ ["<name?>"]);
+        # maps over the post-convertifList defs
+        mappable = true;
       };
 
     uniq = elemType: mkOptionType {
