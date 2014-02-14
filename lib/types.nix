@@ -7,7 +7,11 @@ with import ./options.nix;
 with import ./trivial.nix;
 with import ./strings.nix;
 
-rec {
+let
+  inherit (import ./modules.nix) mergeDefinitions evalModules;
+
+  innerMerge = loc: type: defs: (mergeDefinitions loc type defs).mergedValue;
+in rec {
 
   isType = type: x: (x._type or "") == type;
 
@@ -104,19 +108,19 @@ rec {
 
     listOf = elemType: mkOptionType {
       name = "list of ${elemType.name}s";
-      check = value: isList value && all elemType.check value;
+      check = isList;
       merge = loc: defs:
         concatLists (imap (n: def: imap (m: def':
-          elemType.merge (loc ++ ["[${toString n}-${toString m}]"])
+          innerMerge (loc ++ ["[${toString n}-${toString m}]"]) elemType
             [{ inherit (def) file; value = def'; }]) def.value) defs);
       getSubOptions = prefix: elemType.getSubOptions (prefix ++ ["*"]);
     };
 
     attrsOf = elemType: mkOptionType {
       name = "attribute set of ${elemType.name}s";
-      check = x: isAttrs x && all elemType.check (attrValues x);
+      check = isAttrs;
       merge = loc: defs:
-        zipAttrsWith (name: elemType.merge (loc ++ [name]))
+        zipAttrsWith (name: innerMerge (loc ++ [name]) elemType)
           # Push down position info.
           (map (def: listToAttrs (mapAttrsToList (n: def':
             { name = n; value = { inherit (def) file; value = def'; }; }) def.value)) defs);
@@ -141,10 +145,7 @@ rec {
         attrOnly = attrsOf elemType;
       in mkOptionType {
         name = "list or attribute set of ${elemType.name}s";
-        check = x:
-          if isList x       then listOnly.check x
-          else if isAttrs x then attrOnly.check x
-          else false;
+        check = x: isList x || isAttrs x;
         merge = loc: defs: attrOnly.merge loc (imap convertIfList defs);
         getSubOptions = prefix: elemType.getSubOptions (prefix ++ ["<name?>"]);
       };
@@ -171,14 +172,13 @@ rec {
       name = "function that evaluates to a(n) ${elemType.name}";
       check = isFunction;
       merge = loc: defs:
-        fnArgs: elemType.merge loc (map (fn: { inherit (fn) file; value = fn.value fnArgs; }) defs);
+        fnArgs: innerMerge loc elemType (map (fn: { inherit (fn) file; value = fn.value fnArgs; }) defs);
       getSubOptions = elemType.getSubOptions;
     };
 
     submodule = opts:
       let
         opts' = toList opts;
-        inherit (import ./modules.nix) evalModules;
       in
       mkOptionType rec {
         name = "submodule";
