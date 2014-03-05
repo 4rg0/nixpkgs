@@ -10,7 +10,9 @@ with import ./strings.nix;
 let
   inherit (import ./modules.nix) mergeDefinitions evalModules;
 
-  innerMerge = loc: type: defs: (mergeDefinitions loc type defs).mergedValue;
+  innerMerge = loc: type: defs: let
+    inherit (mergeDefinitions loc type defs) mergedValue defsFinal;
+  in if defsFinal == [] then {} else { value = mergedValue; };
 in rec {
 
   isType = type: x: (x._type or "") == type;
@@ -120,10 +122,12 @@ in rec {
             value = m.value.f x y;
           } ]) l))
             (map (d: map (x: []) d.value) nonMaps) maps;
-        in concatLists (imap (n: def: imap (m: def':
-          innerMerge (loc ++ ["[${toString n}-${toString m}]"]) elemType
-            ([{ inherit (def) file; value = def'; }] ++ elemAt (elemAt mapResults (n - 1)) (m - 1))
-        ) def.value) nonMaps);
+        in map (getAttr "value") (filter (hasAttr "value") (
+          concatLists (imap (n: def: imap (m: def':
+            innerMerge (loc ++ ["[${toString n}-${toString m}]"]) elemType
+              ([{ inherit (def) file; value = def'; }] ++ elemAt (elemAt mapResults (n - 1)) (m - 1))
+          ) def.value) nonMaps)
+        ));
       getSubOptions = prefix: elemType.getSubOptions (prefix ++ ["*"]);
       mappable = true;
     };
@@ -140,12 +144,14 @@ in rec {
             inherit name;
             value = map (m: { inherit (m) file; value = m.value.f name; }) maps;
           }) names);
-        in zipAttrsWith (name: defs:
-          innerMerge (loc ++ [name]) elemType (defs ++ getAttr name mapResults)
-        )
-          # Push down position info.
-          (map (def: listToAttrs (mapAttrsToList (n: def':
-            { name = n; value = { inherit (def) file; value = def'; }; }) def.value)) nonMaps);
+        in mapAttrs (n: getAttr "value") (filterAttrs (n: hasAttr "value") (
+          zipAttrsWith (name: defs:
+            innerMerge (loc ++ [name]) elemType (defs ++ getAttr name mapResults)
+          )
+            # Push down position info.
+            (map (def: listToAttrs (mapAttrsToList (n: def':
+              { name = n; value = { inherit (def) file; value = def'; }; }) def.value)) nonMaps)
+        ));
       getSubOptions = prefix: elemType.getSubOptions (prefix ++ ["<name>"]);
       mappable = true;
     };
@@ -196,8 +202,11 @@ in rec {
     functionTo = elemType: mkOptionType {
       name = "function that evaluates to a(n) ${elemType.name}";
       check = isFunction;
-      merge = loc: defs:
-        fnArgs: innerMerge loc elemType (map (fn: { inherit (fn) file; value = fn.value fnArgs; }) defs);
+      merge = loc: defs: fnArgs:
+        (innerMerge loc elemType (map (fn:
+          { inherit (fn) file; value = fn.value fnArgs; }
+        ) defs)).value or (throw
+          "The option `${showOption loc}' is defined as a function that doesn't return any value (using mkIf or mkMerge), in ${showFiles (getFiles defs)}");
       getSubOptions = elemType.getSubOptions;
     };
 
