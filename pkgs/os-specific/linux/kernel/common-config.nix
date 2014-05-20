@@ -1,4 +1,4 @@
-{ stdenv, version, kernelPlatform, extraConfig }:
+{ stdenv, version, kernelPlatform, extraConfig, features }:
 
 with stdenv.lib;
 
@@ -16,7 +16,9 @@ with stdenv.lib;
   DEBUG_DEVRES n
   DEBUG_NX_TEST n
   DEBUG_STACK_USAGE n
-  DEBUG_STACKOVERFLOW n
+  ${optionalString (!(features.grsecurity or true)) ''
+    DEBUG_STACKOVERFLOW n
+  ''}
   RCU_TORTURE_TEST n
   SCHEDSTATS n
   DETECT_HUNG_TASK y
@@ -282,7 +284,7 @@ with stdenv.lib;
   # Virtualisation.
   PARAVIRT? y
   ${if versionAtLeast version "3.10" then ''
-    HYPERVISOR_GUEST y
+    HYPERVISOR_GUEST? y
   '' else ''
     PARAVIRT_GUEST? y
   ''}
