@@ -10727,6 +10727,10 @@ in
       ];
   };
 
+  linux_odroid_xu4 = callPackage ../os-specific/linux/kernel/linux-odroid_xu4.nix {
+    kernelPatches = [ kernelPatches.bridge_stp_helper ];
+  };
+
   linux_rpi = callPackage ../os-specific/linux/kernel/linux-rpi.nix {
     kernelPatches = [ kernelPatches.bridge_stp_helper ];
   };
@@ -10974,6 +10978,7 @@ in
   # Build the kernel modules for the some of the kernels.
   linuxPackages_mptcp = linuxPackagesFor pkgs.linux_mptcp linuxPackages_mptcp;
   linuxPackages_rpi = linuxPackagesFor pkgs.linux_rpi linuxPackages_rpi;
+  linuxPackages_odroid_xu4 = linuxPackagesFor pkgs.linux_odroid_xu4 linuxPackages_odroid_xu4;
   linuxPackages_3_10 = recurseIntoAttrs (linuxPackagesFor pkgs.linux_3_10 linuxPackages_3_10);
   linuxPackages_3_10_tuxonice = linuxPackagesFor pkgs.linux_3_10_tuxonice linuxPackages_3_10_tuxonice;
   linuxPackages_3_12 = recurseIntoAttrs (linuxPackagesFor pkgs.linux_3_12 linuxPackages_3_12);
@@ -11343,6 +11348,11 @@ in
   ubootNanonote = callPackage ../misc/uboot/nanonote.nix { };
 
   ubootGuruplug = callPackage ../misc/uboot/guruplug.nix { };
+  
+  ubootOdroidXU4 = callPackage ../misc/uboot/odroid_xu4.nix { 
+    bc = bc;
+    dtc = dtc;
+  };
 
   uclibc = callPackage ../os-specific/linux/uclibc { };
 
