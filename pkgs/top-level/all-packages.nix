@@ -4422,7 +4422,7 @@ with rec {
   eggDerivation = callPackage ../development/compilers/chicken/eggDerivation.nix { };
 
   chicken = callPackage ../development/compilers/chicken {
-    bootstrap-chicken = chicken.override { bootstrap-chicken = null; };
+    bootstrap-chicken = self.chicken.override { bootstrap-chicken = null; };
   };
 
   egg2nix = callPackage ../development/tools/egg2nix {
