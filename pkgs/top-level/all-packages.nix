@@ -12,18 +12,8 @@ self: pkgs:
 
 with pkgs;
 
-let
+with rec {
   defaultScope = pkgs // pkgs.xorg;
-in
-
-{
-
-  # Make some arguments passed to all-packages.nix available
-  inherit system platform;
-
-  # Allow callPackage to fill in the pkgs argument
-  inherit pkgs;
-
 
   # We use `callPackage' to be able to omit function arguments that
   # can be obtained from `pkgs' or `pkgs.xorg' (i.e. `defaultScope').
@@ -34,6 +24,18 @@ in
   callPackages = lib.callPackagesWith defaultScope;
 
   newScope = extra: lib.callPackageWith (defaultScope // extra);
+};
+
+{
+
+  # Make some arguments passed to all-packages.nix available
+  inherit system platform;
+
+  # Allow callPackage to fill in the pkgs argument
+  inherit pkgs;
+
+  # Helper functions used to automatically provide arguments to packages.
+  inherit callPackage callPackages newScope;
 
   # Easily override this package set.
   # Warning: this function is very expensive and must not be used
