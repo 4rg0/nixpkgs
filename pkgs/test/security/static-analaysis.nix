@@ -39,12 +39,25 @@ let
           (as: !isDerivation as) (path: maybeAnnotateValue path)
           attrs;
 
-      # We don't want to patch callPackages, but the override function
-      # returned by it.
+      # What count as the generation of a derivation, is location of the nix
+      # expression which contains the content of the derivation.  Thus using
+      # stdenv.mkDerivation from an older generation is fine, what matters
+      # is the generation of the arguments (file) which is calling this
+      # function.
+      #
+      # As we have no way to annotate the arguments of the derivations with
+      # a generation property, we have to ignore the generation property
+      # carried by all functions. Note, that we want to carry over the
+      # generation of functions such as override and overrideDerivation
+      # functions, as these are only extending sources which are mostly
+      # coming from older generations.
+      #
+      # This function filters out any function which are safe.
       validFunctionName = path:
         let funName = elemAt path (length path - 1); in
           ! elem funName [ "newScope" "callPackage" "callPackages" "callPackage_i686" "mkDerivation"
-            "forceNativeDrv" "lowPrio"
+            "forceNativeDrv" "lowPrio" "writeScriptBin" "makeSetupHook" "fetchurl"
+            "buildPerlPackage"
           ];
 
       annotateValue = path: value:
