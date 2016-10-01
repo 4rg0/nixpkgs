@@ -62,13 +62,13 @@ let
 
       annotateValue = path: value:
         if isDerivation value then
-          # assert __trace (strict ["annotatePkgs::" generation] ++ path) true;
+          # assert __trace (["annotatePkgs::" generation] ++ path) true;
           (mapAttrs (name: maybeAnnotateValue (path ++ [".drv" name])) value)
           // {
             _generation =
               if value ? _generation then value._generation
               else
-                # assert __trace (strict ["annotatePkgs>>" generation] ++ path) true;
+                # assert __trace (["annotatePkgs>>" generation] ++ path) true;
                 generation;
           }
         else if isFunction value && validFunctionName path then
