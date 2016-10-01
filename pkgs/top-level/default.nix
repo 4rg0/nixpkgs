@@ -95,7 +95,7 @@ let
   # Return the complete set of packages, after applying the overrides
   # returned by the `overrider' function (see above).  Warning: this
   # function is very expensive!
-  unfixPkgsWithOverridesWithPackages = overrider: packages:
+  unfixPkgsWithOverridesWithPackages = overrider: packages: deps:
     let
       stdenvAdapters = self: super:
         let res = packages.adapters self; in res // {
@@ -133,14 +133,15 @@ let
       customOverrides = self: super:
         lib.optionalAttrs (bootStdenv == null) (overrider self super);
     in
-      lib.extends customOverrides (
-        lib.extends stdenvOverrides (
-          lib.extends aliases (
-            lib.extends allPackages (
-              lib.extends stdenvDefault (
-                lib.extends trivialBuilders (
-                  lib.extends stdenvAdapters (
-                    self: {})))))));
+      lib.fix (
+        lib.extends customOverrides (
+          lib.extends stdenvOverrides (
+            lib.extends aliases (
+              lib.extends allPackages (
+                lib.extends stdenvDefault (
+                  lib.extends trivialBuilders (
+                    lib.extends stdenvAdapters (
+                      self: {}))))))));
 
   # Apply ABI compatible fixes:
   #  1. This will cause the recompilation of packages which have a different
