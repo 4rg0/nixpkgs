@@ -27,13 +27,7 @@
 
   # List of paths that are used to build the base channel, which is used as
   # a reference for security updates.
-, defaultPackages ? {
-    adapters = import ../stdenv/adapters.nix;
-    builders = import ../build-support/trivial-builders.nix;
-    stdenv = import ./stdenv.nix;
-    all = import ./all-packages.nix;
-    aliases = import ./aliases.nix;
-  }
+, defaultPackages ? import ./index.nix
 
   # Additional list of packages, similar to defaultPackages, which is used
   # to apply security fixes to a few packages which would be compiled, and
