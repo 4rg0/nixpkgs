@@ -114,7 +114,7 @@ let
           lib.fix' (unfixPkgsWithOverridesWithPackages overrider defaultPackages);
       };
       allPackages = self: super:
-        let res = packages.all allPackagesArgs res self;
+        let res = packages.all allPackagesArgs res self deps;
         in res;
 
       aliases = self: super: packages.aliases super;

@@ -8,12 +8,15 @@
 { system, bootStdenv, noSysDirs, config, crossSystem, platform, lib
 , pkgsWithOverrides
 , ... }:
-self: pkgs:
+
+self: # This file fix-point, no overriden packages, no aliases. (do not use)
+pkgs: # Contains statically linked packages.
+deps: # Contains dynamically linked packages.
 
 with pkgs;
 
 with rec {
-  defaultScope = pkgs // pkgs.xorg;
+  defaultScope = deps // deps.xorg;
 
   # We use `callPackage' to be able to omit function arguments that
   # can be obtained from `pkgs' or `pkgs.xorg' (i.e. `defaultScope').
