@@ -140,11 +140,11 @@ let
             old = inputsOlderThanGeneration generation 1 value;
           };
           messages = []
-          ++ optional (generation != 0) "alias-original: generation ${toString generation}"
-          ++ optional (inputs-by-generations.old != []) ''unpatched-inputs: generation ${toString generation}, inputs: ${
+          ++ optional (generation != 0) "error: alias-original: generation ${toString generation}"
+          ++ optional (inputs-by-generations.old != []) ''error: unpatched-inputs: generation ${toString generation}, inputs: ${
                concatStringsSep ", " (map (d: "(${toString (getGeneration generation d)}, ${d.outPath})") inputs-by-generations.old)
              }''
-          ++ optional (inputs-by-generations.gen0 != []) ''static-linking: generation ${toString generation}, inputs: ${
+          ++ optional (inputs-by-generations.gen0 != []) ''warning: static-linking: generation ${toString generation}, inputs: ${
                concatStringsSep ", " (map (d: "(${toString (getGeneration generation d)}, ${d.outPath})") inputs-by-generations.gen0)
              }'';
         };
