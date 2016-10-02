@@ -23,7 +23,7 @@ let
   # Such annotations are useful to analyze the data-flow of the derivations,
   # and to find issues which are not safe for applying ABI compatible
   # patches.
-  rangeMax = 10;
+  rangeMax = 2;
   genPkgs = with lib;
     let generations = range 0 rangeMax; in
       fold (gen: pkgs: annotatePkgs gen (pkgsFun pkgs)) pkgs generations;
