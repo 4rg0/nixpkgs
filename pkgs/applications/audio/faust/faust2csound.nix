@@ -1,8 +1,9 @@
-{ faust
+{ stdenv, makeWrapper, pkgconfig
+, faust
 , csound
-}:
+}@deps:
 
-faust.wrapWithBuildEnv {
+stdenv.mkDerivation (faust.wrapWithBuildEnv deps {
 
   baseName = "faust2csound";
 
@@ -17,4 +18,4 @@ faust.wrapWithBuildEnv {
     NIX_CFLAGS_COMPILE="$(printf '%s' "$NIX_CFLAGS_COMPILE" | sed 's%${csound}/include%${csound}/include/csound%')"
   '';
 
-}
+})

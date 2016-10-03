@@ -1,10 +1,11 @@
-{ faust
+{ stdenv
+, faust, makeWrapper, pkgconfig
 , gtk2
 , jack2Full
 , opencv
-}:
+}@deps:
 
-faust.wrapWithBuildEnv {
+stdenv.mkDerivation (faust.wrapWithBuildEnv deps {
 
   baseName = "faust2jack";
 
@@ -20,4 +21,4 @@ faust.wrapWithBuildEnv {
     opencv
   ];
 
-}
+})

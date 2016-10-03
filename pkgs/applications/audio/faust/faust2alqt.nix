@@ -1,9 +1,10 @@
-{ faust
+{ stdenv, makeWrapper, pkgconfig
+, faust
 , alsaLib
 , qt4
-}:
+}@deps:
 
-faust.wrapWithBuildEnv {
+stdenv.mkDerivation (faust.wrapWithBuildEnv deps {
 
   baseName = "faust2alqt";
 
@@ -12,4 +13,4 @@ faust.wrapWithBuildEnv {
     qt4
   ];
 
-}
+})

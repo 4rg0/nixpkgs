@@ -1,4 +1,5 @@
-{ faust
+{ stdenv, makeWrapper, pkgconfig
+, faust
 , alsaLib
 , atk
 , cairo
@@ -8,9 +9,9 @@
 , glib
 , gtk2
 , pango
-}:
+}@deps:
 
-faust.wrapWithBuildEnv {
+stdenv.mkDerivation (faust.wrapWithBuildEnv deps {
 
   baseName = "faust2alsa";
 
@@ -26,4 +27,4 @@ faust.wrapWithBuildEnv {
     pango
   ];
 
-}
+})

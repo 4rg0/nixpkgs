@@ -120,14 +120,14 @@ let
   };
 
   # Default values for faust2appl.
-  faust2ApplBase =
+  faust2ApplBase = {faust, ...}@deps:
     { baseName
     , dir ? "tools/faust2appls"
     , scripts ? [ baseName ]
     , ...
     }@args:
 
-    args // {
+    args // (with deps; {
       name = "${baseName}-${version}";
 
       inherit src;
@@ -158,7 +158,7 @@ let
       meta = meta // {
         description = "The ${baseName} script, part of faust functional programming language for realtime audio signal processing";
       };
-    };
+    });
 
   # Some 'faust2appl' scripts, such as faust2alsa, run faust to
   # generate cpp code, then invoke the c++ compiler to build the code.
@@ -176,13 +176,13 @@ let
   #
   # The build input 'faust' is automatically added to the
   # propagatedBuildInputs.
-  wrapWithBuildEnv =
+  wrapWithBuildEnv = { faust, makeWrapper, pkgconfig, ... }@deps:
     { baseName
     , propagatedBuildInputs ? [ ]
     , ...
     }@args:
 
-    stdenv.mkDerivation ((faust2ApplBase args) // {
+    (faust2ApplBase deps args) // (with deps; {
 
       buildInputs = [ makeWrapper pkgconfig ];
 
@@ -206,7 +206,7 @@ let
   # simply need to be wrapped with some dependencies on PATH.
   #
   # The build input 'faust' is automatically added to the PATH.
-  wrap =
+  wrap = { faust, ... }@deps:
     { baseName
     , runtimeInputs ? [ ]
     , ...
@@ -216,7 +216,7 @@ let
 
       runtimePath = concatStringsSep ":" (map (p: "${p}/bin") ([ faust ] ++ runtimeInputs));
 
-    in stdenv.mkDerivation ((faust2ApplBase args) // {
+    in (faust2ApplBase deps args) // (with deps; {
 
       buildInputs = [ makeWrapper ];
 

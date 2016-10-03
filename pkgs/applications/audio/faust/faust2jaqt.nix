@@ -1,10 +1,11 @@
-{ faust
+{ stdenv, makeWrapper, pkgconfig
+, faust
 , jack2Full
 , opencv
 , qt4
-}:
+}@deps:
 
-faust.wrapWithBuildEnv {
+stdenv.mkDerivation (faust.wrapWithBuildEnv deps {
 
   baseName = "faust2jaqt";
 
@@ -19,4 +20,4 @@ faust.wrapWithBuildEnv {
     qt4
   ];
 
-}
+})

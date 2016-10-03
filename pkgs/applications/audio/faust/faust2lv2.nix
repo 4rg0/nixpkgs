@@ -1,11 +1,12 @@
-{ faust
+{ stdenv, makeWrapper, pkgconfig
+, faust
 , lv2
-}:
+}@deps:
 
-faust.wrapWithBuildEnv {
+stdenv.mkDerivation (faust.wrapWithBuildEnv deps {
 
   baseName = "faust2lv2";
 
   propagatedBuildInputs = [ lv2 ];
 
-}
+})
