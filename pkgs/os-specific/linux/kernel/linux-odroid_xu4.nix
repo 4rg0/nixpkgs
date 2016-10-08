@@ -1,19 +1,15 @@
-{ stdenv, fetchgit, perl, buildLinux, ... } @ args:
+{ stdenv, fetchFromGitHub, perl, buildLinux, ... } @ args:
 
-let
+import ./generic.nix (args // rec {
+  version = "4.8.0-git-2016-10-06";
 
-  rev = "5eb40d45b291ee129cbfac2073f1ca7aa32ff4c5";
+  modDirVersion = "4.8.0";
 
-in import ./generic.nix (args // rec {
-  version = "4.2.0-${rev}";
-
-  modDirVersion = "4.2.0";
-
-  src = fetchgit {
-    url = "https://github.com/tobetter/linux";
-    branchName = "odroidxu4-v4.2";
-    sha256 = "0jg203wswdkdanxsqycgv1jfx2a05z3p1b44r4xgaqmfcc6fsx70";
-    inherit rev;
+  src = fetchFromGitHub {
+    owner = "tobetter";
+    repo = "linux";
+    rev = "76f3f58496c09bc2cccb91a2dfd911f42019d886";
+    sha256 = "00kwqjrp4jj1858z8x0fd1nnmmx0ixnyqrh3ss320gc8xa1ljczz";
   };
 
   features.iwlwifi = true;
