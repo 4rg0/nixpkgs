@@ -185,6 +185,8 @@ let
       "timers.target"
     ];
 
+  boolToString = value: if value then "yes" else "no";
+
   makeJobScript = name: text:
     let mkScriptName =  s: (replaceChars [ "\\" ] [ "-" ] (shellEscape s) );
         x = pkgs.writeTextFile { name = "unit-script"; executable = true; destination = "/bin/${mkScriptName name}"; inherit text; };
@@ -212,8 +214,10 @@ let
         // optionalAttrs (config.restartTriggers != [])
           { X-Restart-Triggers = toString config.restartTriggers; }
         // optionalAttrs (config.description != "") {
-          Description = config.description;
-        } // optionalAttrs (config.onFailure != []) {
+          Description = config.description; }
+        // optionalAttrs (config.documentation != []) {
+          Documentation = toString config.documentation; }
+        // optionalAttrs (config.onFailure != []) {
           OnFailure = toString config.onFailure;
         };
     };
@@ -389,13 +393,13 @@ in
     systemd.units = mkOption {
       description = "Definition of systemd units.";
       default = {};
-      type = types.attrsOf types.optionSet;
-      options = { name, config, ... }:
+      type = with types; attrsOf (submodule (
+        { name, config, ... }:
         { options = concreteUnitOptions;
           config = {
             unit = mkDefault (makeUnit name config);
           };
-        };
+        }));
     };
 
     systemd.packages = mkOption {
@@ -406,43 +410,37 @@ in
 
     systemd.targets = mkOption {
       default = {};
-      type = types.attrsOf types.optionSet;
-      options = [ targetOptions unitConfig ];
+      type = with types; attrsOf (submodule [ { options = targetOptions; } unitConfig] );
       description = "Definition of systemd target units.";
     };
 
     systemd.services = mkOption {
       default = {};
-      type = types.attrsOf types.optionSet;
-      options = [ serviceOptions unitConfig serviceConfig ];
+      type = with types; attrsOf (submodule [ { options = serviceOptions; } unitConfig serviceConfig ]);
       description = "Definition of systemd service units.";
     };
 
     systemd.sockets = mkOption {
       default = {};
-      type = types.attrsOf types.optionSet;
-      options = [ socketOptions unitConfig ];
+      type = with types; attrsOf (submodule [ { options = socketOptions; } unitConfig ]);
       description = "Definition of systemd socket units.";
     };
 
     systemd.timers = mkOption {
       default = {};
-      type = types.attrsOf types.optionSet;
-      options = [ timerOptions unitConfig ];
+      type = with types; attrsOf (submodule [ { options = timerOptions; } unitConfig ]);
       description = "Definition of systemd timer units.";
     };
 
     systemd.paths = mkOption {
       default = {};
-      type = types.attrsOf types.optionSet;
-      options = [ pathOptions unitConfig ];
+      type = with types; attrsOf (submodule [ { options = pathOptions; } unitConfig ]);
       description = "Definition of systemd path units.";
     };
 
     systemd.mounts = mkOption {
       default = [];
-      type = types.listOf types.optionSet;
-      options = [ mountOptions unitConfig mountConfig ];
+      type = with types; listOf (submodule [ { options = mountOptions; } unitConfig mountConfig ]);
       description = ''
         Definition of systemd mount units.
         This is a list instead of an attrSet, because systemd mandates the names to be derived from
@@ -452,8 +450,7 @@ in
 
     systemd.automounts = mkOption {
       default = [];
-      type = types.listOf types.optionSet;
-      options = [ automountOptions unitConfig automountConfig ];
+      type = with types; listOf (submodule [ { options = automountOptions; } unitConfig automountConfig ]);
       description = ''
         Definition of systemd automount units.
         This is a list instead of an attrSet, because systemd mandates the names to be derived from
@@ -600,34 +597,37 @@ in
     systemd.user.units = mkOption {
       description = "Definition of systemd per-user units.";
       default = {};
-      type = types.attrsOf types.optionSet;
-      options = { name, config, ... }:
+      type = with types; attrsOf (submodule (
+        { name, config, ... }:
         { options = concreteUnitOptions;
           config = {
             unit = mkDefault (makeUnit name config);
           };
-        };
+        }));
     };
 
     systemd.user.services = mkOption {
       default = {};
-      type = types.attrsOf types.optionSet;
-      options = [ serviceOptions unitConfig serviceConfig ];
+      type = with types; attrsOf (submodule [ { options = serviceOptions; } unitConfig serviceConfig ] );
       description = "Definition of systemd per-user service units.";
     };
 
     systemd.user.timers = mkOption {
       default = {};
-      type = types.attrsOf types.optionSet;
-      options = [ timerOptions unitConfig ];
+      type = with types; attrsOf (submodule [ { options = timerOptions; } unitConfig ] );
       description = "Definition of systemd per-user timer units.";
     };
 
     systemd.user.sockets = mkOption {
       default = {};
-      type = types.attrsOf types.optionSet;
-      options = [ socketOptions unitConfig ];
+      type = with types; attrsOf (submodule [ { options = socketOptions; } unitConfig ] );
       description = "Definition of systemd per-user socket units.";
+    };
+
+    systemd.user.targets = mkOption {
+      default = {};
+      type = with types; attrsOf (submodule [ { options = targetOptions; } unitConfig] );
+      description = "Definition of systemd per-user target units.";
     };
 
     systemd.additionalUpstreamSystemUnits = mkOption {
@@ -758,6 +758,7 @@ in
     systemd.user.units =
          mapAttrs' (n: v: nameValuePair "${n}.service" (serviceToUnit n v)) cfg.user.services
       // mapAttrs' (n: v: nameValuePair "${n}.socket"  (socketToUnit  n v)) cfg.user.sockets
+      // mapAttrs' (n: v: nameValuePair "${n}.target"  (targetToUnit  n v)) cfg.user.targets
       // mapAttrs' (n: v: nameValuePair "${n}.timer"   (timerToUnit   n v)) cfg.user.timers;
 
     system.requiredKernelConfig = map config.lib.kernelConfig.isEnabled
@@ -776,7 +777,7 @@ in
         { wantedBy = [ "timers.target" ];
           timerConfig.OnCalendar = service.startAt;
         })
-        (filterAttrs (name: service: service.enable && service.startAt != "") cfg.services);
+        (filterAttrs (name: service: service.enable && service.startAt != []) cfg.services);
 
     # Generate timer units for all services that have a ‘startAt’ value.
     systemd.user.timers =
@@ -784,7 +785,7 @@ in
         { wantedBy = [ "timers.target" ];
           timerConfig.OnCalendar = service.startAt;
         })
-        (filterAttrs (name: service: service.startAt != "") cfg.user.services);
+        (filterAttrs (name: service: service.startAt != []) cfg.user.services);
 
     systemd.sockets.systemd-journal-gatewayd.wantedBy =
       optional config.services.journald.enableHttpGateway "sockets.target";

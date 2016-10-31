@@ -21,11 +21,11 @@ with stdenv.lib;
 
 stdenv.mkDerivation rec {
   name = "gajim-${version}";
-  version = "0.16.5";
+  version = "0.16.6";
 
   src = fetchurl {
     url = "http://www.gajim.org/downloads/0.16/gajim-${version}.tar.bz2";
-    sha256 = "14fhcqnkqygh91132dnf1idayj4r3iqbwb44sd3mxv20n6ribh55";
+    sha256 = "1p3qwzy07f0wkika9yigyiq167l2k6wn12flqa7x55z4ihbysmqk";
   };
 
   patches = [
@@ -61,7 +61,7 @@ stdenv.mkDerivation rec {
 
   propagatedBuildInputs = [
     pythonPackages.pygobject2 pythonPackages.pyGtkGlade
-    pythonPackages.sqlite3 pythonPackages.pyasn1
+    pythonPackages.pyasn1
     pythonPackages.pyxdg
     pythonPackages.nbxmpp
     pythonPackages.pyopenssl pythonPackages.dbus-python

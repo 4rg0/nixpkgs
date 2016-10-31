@@ -44,16 +44,18 @@ stdenv.mkDerivation rec {
 
   patches =
     [
+      ./RH-1380296-NEWKEYS-null-pointer-deref.patch
       ./locale_archive.patch
       ./fix-host-key-algorithms-plus.patch
 
       # See discussion in https://github.com/NixOS/nixpkgs/pull/16966
       ./dont_create_privsep_path.patch
+      ./fix-CVE-2016-8858.patch
     ]
     ++ optional withGssapiPatches gssapiSrc;
 
   buildInputs = [ zlib openssl libedit pkgconfig pam ]
-    ++ optional withKerberos [ kerberos ];
+    ++ optional withKerberos kerberos;
 
   # I set --disable-strip because later we strip anyway. And it fails to strip
   # properly when cross building.
@@ -91,7 +93,7 @@ stdenv.mkDerivation rec {
     description = "An implementation of the SSH protocol";
     license = stdenv.lib.licenses.bsd2;
     platforms = platforms.unix;
-    maintainers = with maintainers; [ eelco ];
+    maintainers = with maintainers; [ eelco aneeshusa ];
     broken = hpnSupport; # probably after 6.7 update
   };
 }

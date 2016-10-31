@@ -80,6 +80,37 @@ let
     inherit system bootStdenv noSysDirs config crossSystem platform lib;
   };
 
+  stdenvAdapters = pkgsIndex: deps: self: super:
+    let res = pkgsIndex.adapters self; in res // {
+      stdenvAdapters = res;
+    };
+
+  trivialBuilders = pkgsIndex: deps: self: super:
+    pkgsIndex.builders {
+      inherit lib; inherit (self) stdenv stdenvNoCC; inherit (self.xorg) lndir;
+    };
+
+  stdenvDefault = pkgsIndex: deps: self: super:
+    (pkgsIndex.stdenv topLevelArguments) {} pkgs;
+
+  allPackages = pkgsIndex: deps: self: super:
+    let res = pkgsIndex.all topLevelArguments res self deps;
+    in res;
+
+  aliases = pkgsIndex: deps: self: super:
+    pkgsIndex.aliases super;
+
+  # stdenvOverrides is used to avoid circular dependencies for building
+  # the standard build environment. This mechanism uses the override
+  # mechanism to implement some staged compilation of the stdenv.
+  #
+  # We don't want stdenv overrides in the case of cross-building, or
+  # otherwise the basic overridden packages will not be built with the
+  # crossStdenv adapter.
+  stdenvOverrides = pkgsIndex: deps: self: super:
+    lib.optionalAttrs (crossSystem == null && super.stdenv ? overrides)
+      (super.stdenv.overrides super);
+
   # Allow packages to be overridden globally via the `packageOverrides'
   # configuration option, which must be a function that takes `pkgs'
   # as an argument and returns a set of new or overridden packages.
@@ -87,61 +118,40 @@ let
   # (un-overridden) set of packages, allowing packageOverrides
   # attributes to refer to the original attributes (e.g. "foo =
   # ... pkgs.foo ...").
-  pkgs = lib.fix' (unfixPkgsWithPackages defaultPackages);
+  configOverrides = pkgsIndex: deps: self: super:
+    lib.optionalAttrs (bootStdenv == null)
+      ((config.packageOverrides or (super: {})) super);
 
-  unfixPkgsWithPackages =
-    unfixPkgsWithOverridesWithPackages (self: config.packageOverrides or (super: {}));
+  # The complete chain of package set builders, applied from top to bottom
+  toFix = pkgsIndex: deps:
+    lib.foldl' (lib.flip lib.extends) (self: {})
+      (map (f: f pkgsIndex deps) [
+        stdenvAdapters
+        trivialBuilders
+        stdenvDefault
+        allPackages
+        aliases
+        stdenvOverrides
+        configOverrides
+      ]);
 
-  # Return the complete set of packages, after applying the overrides
-  # returned by the `overrider' function (see above).  Warning: this
-  # function is very expensive!
-  unfixPkgsWithOverridesWithPackages = overrider: packages: deps:
-    let
-      stdenvAdapters = self: super:
-        let res = packages.adapters self; in res // {
-          stdenvAdapters = res;
-        };
+  # Use `overridePackages` to easily override this package set.
+  # Warning: this function is very expensive and must not be used
+  # from within the nixpkgs repository.
+  #
+  # Example:
+  #  pkgs.overridePackages (self: super: {
+  #    foo = super.foo.override { ... };
+  #  }
+  #
+  # The result is `pkgs' where all the derivations depending on `foo'
+  # will use the new version.
 
-      trivialBuilders = self: super:
-        (packages.builders {
-          inherit lib; inherit (self) stdenv; inherit (self.xorg) lndir;
-        });
-
-      stdenvDefault = self: super: (packages.stdenv topLevelArguments) {} pkgs;
-
-      allPackagesArgs = topLevelArguments // {
-        pkgsWithOverrides = overrider:
-          lib.fix' (unfixPkgsWithOverridesWithPackages overrider defaultPackages);
-      };
-      allPackages = self: super:
-        let res = packages.all allPackagesArgs res self deps;
-        in res;
-
-      aliases = self: super: packages.aliases super;
-
-      # stdenvOverrides is used to avoid circular dependencies for building
-      # the standard build environment. This mechanism uses the override
-      # mechanism to implement some staged compilation of the stdenv.
-      #
-      # We don't want stdenv overrides in the case of cross-building, or
-      # otherwise the basic overridden packages will not be built with the
-      # crossStdenv adapter.
-      stdenvOverrides = self: super:
-        lib.optionalAttrs (crossSystem == null && super.stdenv ? overrides)
-          (super.stdenv.overrides super);
-
-      customOverrides = self: super:
-        lib.optionalAttrs (bootStdenv == null) (overrider self super);
-    in
-      lib.fix (
-        lib.extends customOverrides (
-          lib.extends stdenvOverrides (
-            lib.extends aliases (
-              lib.extends allPackages (
-                lib.extends stdenvDefault (
-                  lib.extends trivialBuilders (
-                    lib.extends stdenvAdapters (
-                      self: {}))))))));
+  # Return the complete set of packages. Warning: this function is very
+  # expensive!
+  pkgs =
+    lib.makeExtensibleWithCustomName "overridePackages"
+      lib.fix' (deps: lib.fix (toFix defaultPackages deps));
 
   # Apply ABI compatible fixes:
   #  1. This will cause the recompilation of packages which have a different
@@ -174,8 +184,8 @@ let
       #
       #  - abifix: set of fixed packaged, which are both fixed and patched.
       #
-      onefix = unfixPkgsWithPackages quickfixPackages pkgs;
-      recfix = unfixPkgsWithPackages quickfixPackages abifix;
+      onefix = toFix quickfixPackages pkgs;
+      recfix = toFix quickfixPackages abifix;
       abifix = zipWithUpdatedPackages ["pkgs"] pkgs onefix recfix;
 
       # Traverse all packages. For each package, take the quickfix version
@@ -322,7 +332,6 @@ let
               sed -e 's|${baseNameOf drv}|'$(basename $out)'|g' -f ${sedScript} | \
               $nixStore --restore $out
           '';
-
     in
       if doPatchWithDependencies then abifix
       else onefix;
