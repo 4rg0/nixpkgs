@@ -164,17 +164,14 @@ let
         chmod u+w -R ../source
         arch=`cd $dev/lib/modules/${modDirVersion}/build/arch; ls`
 
-        # Remove unusued arches
-        mv arch/$arch .
-        rm -fR arch
-        mkdir arch
-        mv $arch arch
-
         # Remove all driver-specific code (50M of which is headers)
         rm -fR drivers
 
         # Keep all headers
         find .  -type f -name '*.h' -print0 | xargs -0 chmod u-w
+
+        # Keep all lds files for Aarch64
+        find .  -type f -name '*.lds' -print0 | xargs -0 chmod u-w
 
         # Keep root and arch-specific Makefiles
         chmod u-w Makefile
