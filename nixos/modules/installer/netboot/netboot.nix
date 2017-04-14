@@ -1,7 +1,7 @@
 # This module creates netboot media containing the given NixOS
 # configuration.
 
-{ config, lib, stdenv, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 with lib;
 
@@ -18,13 +18,15 @@ with lib;
 
   };
 
-  config = {
+  config = rec {
     # Don't build the GRUB menu builder script, since we don't need it
     # here and it causes a cyclic dependency.
     boot.loader.grub.enable = false;
 
     # !!! Hack - attributes expected by other modules.
-    system.boot.loader.kernelFile = "bzImage";
+    system.boot.loader.kernelFile = if pkgs.stdenv.system == "aarch64-linux"
+                                    then "Image"
+                                    else "bzImage";
 
     fileSystems."/" =
       { fsType = "tmpfs";
@@ -80,7 +82,12 @@ with lib;
         ];
     };
 
-    system.build.netbootIpxeScript = pkgs.writeTextDir "netboot.ipxe" "#!ipxe\nkernel bzImage init=${config.system.build.toplevel}/init ${toString config.boot.kernelParams}\ninitrd initrd\nboot";
+    system.build.netbootIpxeScript = pkgs.writeTextDir "netboot.ipxe" ''
+      #!ipxe
+      kernel ${system.boot.loader.kernelFile} init=${config.system.build.toplevel}/init ${toString config.boot.kernelParams}
+      initrd initrd
+      boot
+    '';
 
     boot.loader.timeout = 10;
 

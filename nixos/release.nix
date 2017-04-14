@@ -126,6 +126,30 @@ in rec {
       '';
     };
 
+  netboot.aarch64-linux = let build = (import lib/eval-config.nix {
+      system = "aarch64-linux";
+      modules = [
+        ./modules/installer/netboot/netboot-minimal.nix
+        versionModule
+      ];
+    }).config.system.build;
+  in
+    pkgs.symlinkJoin {
+      name="netboot";
+      paths=[
+        build.netbootRamdisk
+        build.kernel
+        build.netbootIpxeScript
+      ];
+      postBuild = ''
+        mkdir -p $out/nix-support
+        echo "file Image $out/Image" >> $out/nix-support/hydra-build-products
+        echo "file initrd $out/initrd" >> $out/nix-support/hydra-build-products
+        echo "file ipxe $out/netboot.ipxe" >> $out/nix-support/hydra-build-products
+      '';
+    };
+
+
   iso_minimal = forAllSystems (system: makeIso {
     module = ./modules/installer/cd-dvd/installation-cd-minimal.nix;
     type = "minimal";
