@@ -81,10 +81,21 @@ stdenv.mkDerivation rec {
       done
     '';
 
+  systemWrapper = let
+      systemWrapperOpts = {
+        "x86_64-linux" = "x86_64";
+        "aarch64-linux" = "aarch64";
+       "default" = "i386";
+      };
+    in if (systemWrapperOpts ? stdenv.system)
+                  then (builtins.getAttr stdenv.system systemWrapperOpts)
+                  else systemWrapperOpts.default;
+
+
   postInstall =
     ''
       # Add a ‘qemu-kvm’ wrapper for compatibility/convenience.
-      p="$out/bin/qemu-system-${if stdenv.system == "x86_64-linux" then "x86_64" else "i386"}"
+      p="$out/bin/qemu-system-${systemWrapper}"
       if [ -e "$p" ]; then
         makeWrapper "$p" $out/bin/qemu-kvm --add-flags "\$([ -e /dev/kvm ] && echo -enable-kvm)"
       fi
