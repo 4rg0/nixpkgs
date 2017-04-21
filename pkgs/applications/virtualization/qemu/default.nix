@@ -85,7 +85,7 @@ stdenv.mkDerivation rec {
       systemWrapperOpts = {
         "x86_64-linux" = "x86_64";
         "aarch64-linux" = "aarch64";
-       "default" = "i386";
+        "default" = "i386";
       };
     in if (builtins.hasAttr stdenv.system systemWrapperOpts)
                   then (builtins.getAttr stdenv.system systemWrapperOpts)
