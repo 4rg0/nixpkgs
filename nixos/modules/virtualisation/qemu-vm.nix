@@ -443,7 +443,7 @@ in
     virtualisation.pathsInNixDB = [ config.system.build.toplevel ];
 
     virtualisation.qemu.options = [ "-machine gic-version=host" "-cpu host"
-                                   "-machine host" ];
+                                   "-machine virt" ];
 
     # Mount the host filesystem via 9P, and bind-mount the Nix store
     # of the host into our own filesystem.  We use mkVMOverride to
