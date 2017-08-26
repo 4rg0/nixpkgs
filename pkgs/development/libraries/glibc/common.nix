@@ -18,8 +18,8 @@
 
 let
   inherit (buildPackages) linuxHeaders;
-  version = "2.25";
-  sha256 = "067bd9bb3390e79aa45911537d13c3721f1d9d3769931a30c2681bfee66f23a0";
+  version = "2.26";
+  sha256 = "1ggnj1hzjym7sn93rbwydcqd562q73lsb7g7kd199g6j9j9hlkp5";
   cross = if buildPlatform != hostPlatform then hostPlatform else null;
 in
 
@@ -59,11 +59,6 @@ stdenv.mkDerivation ({
          "/bin:/usr/bin", which is inappropriate on NixOS machines. This
          patch extends the search path by "/run/current-system/sw/bin". */
       ./fix_path_attribute_in_getconf.patch
-
-      /* Stack Clash */
-      ./CVE-2017-1000366-rtld-LD_LIBRARY_PATH.patch
-      ./CVE-2017-1000366-rtld-LD_PRELOAD.patch
-      ./CVE-2017-1000366-rtld-LD_AUDIT.patch
     ]
     ++ lib.optionals stdenv.isi686 [
       ./fix-i686-memchr.patch
@@ -110,15 +105,12 @@ stdenv.mkDerivation ({
       (if profilingLibraries
        then "--enable-profile"
        else "--disable-profile")
-    ] ++ lib.optionals (cross == null && withLinuxHeaders) [
-      "--enable-kernel=2.6.32"
+    ] ++ lib.optionals withLinuxHeaders [
+      "--enable-kernel=3.2.0" # can't get below with glibc >= 2.26
     ] ++ lib.optionals (cross != null) [
       (if cross.withTLS then "--with-tls" else "--without-tls")
       (if cross ? float && cross.float == "soft" then "--without-fp" else "--with-fp")
-    ] ++ lib.optionals (cross != null
-          && cross.platform ? kernelMajor
-          && cross.platform.kernelMajor == "2.6") [
-      "--enable-kernel=2.6.0"
+    ] ++ lib.optionals (cross != null) [
       "--with-__thread"
     ] ++ lib.optionals (cross == null && stdenv.isArm) [
       "--host=arm-linux-gnueabi"
