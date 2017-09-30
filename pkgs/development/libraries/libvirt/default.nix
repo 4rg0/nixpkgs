@@ -4,7 +4,7 @@
 , iproute, iptables, readline, lvm2, utillinux, systemd, libpciaccess, gettext
 , libtasn1, ebtables, libgcrypt, yajl, pmutils, libcap_ng, libapparmor
 , dnsmasq, libnl, libpcap, libxslt, xhtml1, numad, numactl, perlPackages
-, curl, libiconv, gmp, xen, zfs, parted
+, curl, libiconv, gmp, xen, zfs, parted, qemu
 }:
 
 with stdenv.lib;
@@ -85,11 +85,11 @@ stdenv.mkDerivation rec {
     sed -e "/gettext\.sh/a \\\n# Added in nixpkgs:\ngettext() { \"${gettext}/bin/gettext\" \"\$@\"; }" \
         -i "$out/libexec/libvirt-guests.sh"
 
-    substituteInPlace $out/lib/systemd/system/libvirtd.service --replace /bin/kill ${coreutils}/bin/kill
   '' + optionalString stdenv.isLinux ''
+    substituteInPlace $out/lib/systemd/system/libvirtd.service --replace /bin/kill ${coreutils}/bin/kill
     rm $out/lib/systemd/system/{virtlockd,virtlogd}.*
     wrapProgram $out/sbin/libvirtd \
-      --prefix PATH : ${makeBinPath [ iptables iproute pmutils numad numactl ]}
+      --prefix PATH : ${makeBinPath [ iptables iproute pmutils numad numactl qemu ]}
   '';
 
   enableParallelBuilding = true;

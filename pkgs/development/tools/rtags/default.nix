@@ -1,16 +1,13 @@
-{ stdenv, lib, fetchgit, cmake, llvmPackages, openssl, writeScript, apple_sdk, bash, emacs }:
+{ stdenv, lib, fetchgit, cmake, llvmPackages, openssl, writeScript, apple_sdk, bash, emacs, pkgconfig }:
 
 stdenv.mkDerivation rec {
   name = "rtags-${version}";
   version = "2.12";
 
-  buildInputs = [ cmake llvmPackages.llvm openssl llvmPackages.clang emacs ]
+  nativeBuildInputs = [ cmake pkgconfig ];
+  buildInputs = [ llvmPackages.llvm openssl emacs ]
+    ++ lib.optionals stdenv.cc.isGNU [ llvmPackages.clang-unwrapped ]
     ++ lib.optionals stdenv.isDarwin [ apple_sdk.libs.xpc apple_sdk.frameworks.CoreServices ];
-
-  preConfigure = ''
-    export LIBCLANG_CXXFLAGS="-isystem ${llvmPackages.clang.cc}/include $(llvm-config --cxxflags) -fexceptions" \
-           LIBCLANG_LIBDIR="${llvmPackages.clang.cc}/lib"
-  '';
 
 
   src = fetchgit {
@@ -24,6 +21,11 @@ stdenv.mkDerivation rec {
       rm $out/src/rct/tests/testfile_*.txt
     '';
   };
+
+  preConfigure = ''
+    export LIBCLANG_CXXFLAGS="-isystem ${llvmPackages.clang.cc}/include $(llvm-config --cxxflags) -fexceptions" \
+           LIBCLANG_LIBDIR="${llvmPackages.clang.cc}/lib"
+  '';
 
   enableParallelBuilding = true;
 

@@ -21,6 +21,7 @@ rec {
     erlangR17_odbc_javac = erlangR17.override {
       javacSupport = true; odbcSupport = true;
     };
+    erlangR17_nox = erlangR17.override { wxSupport = false; };
     erlangR18 = lib.callErlang ../development/interpreters/erlang/R18.nix {
       wxGTK = wxGTK30;
     };
@@ -29,6 +30,7 @@ rec {
     erlangR18_odbc_javac = erlangR18.override {
       javacSupport = true; odbcSupport = true;
     };
+    erlangR18_nox = erlangR18.override { wxSupport = false; };
     erlangR19 = lib.callErlang ../development/interpreters/erlang/R19.nix {
       wxGTK = wxGTK30;
     };
@@ -37,6 +39,7 @@ rec {
     erlangR19_odbc_javac = erlangR19.override {
       javacSupport = true; odbcSupport = true;
     };
+    erlangR19_nox = erlangR19.override { wxSupport = false; };
     erlangR20 = lib.callErlang ../development/interpreters/erlang/R20.nix {
       wxGTK = wxGTK30;
     };
@@ -45,6 +48,7 @@ rec {
     erlangR20_odbc_javac = erlangR20.override {
       javacSupport = true; odbcSupport = true;
     };
+    erlangR20_nox = erlangR20.override { wxSupport = false; };
 
     # Bash fork, using custom builder.
     erlang_basho_R16B02 = lib.callErlang ../development/interpreters/erlang/R16B02-8-basho.nix {

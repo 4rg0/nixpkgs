@@ -1,4 +1,4 @@
-{ fetchFromGitHub, stdenv, cmake, openssl, zlib }:
+{ fetchFromGitHub, stdenv, cmake, openssl, zlib, libuv }:
 
 stdenv.mkDerivation rec {
   name = "libwebsockets-${version}";
@@ -11,7 +11,8 @@ stdenv.mkDerivation rec {
     sha256 = "1hv2b5r6sg42xnqhm4ysjvyiz3cqpfmwaqm33vpbx0k7arj4ixvy";
   };
 
-  buildInputs = [ cmake openssl zlib ];
+  buildInputs = [ cmake openssl zlib libuv ];
+  cmakeFlags = [ "-DLWS_WITH_PLUGINS=ON" ];
 
   meta = {
     description = "Light, portable C library for websockets";
@@ -21,8 +22,7 @@ stdenv.mkDerivation rec {
       throughput in both directions.
     '';
     homepage = https://libwebsockets.org/trac/libwebsockets;
-    # See http://git.libwebsockets.org/cgi-bin/cgit/libwebsockets/tree/LICENSE
-    license = stdenv.lib.licenses.gpl2Plus;
+    license = stdenv.lib.licenses.lgpl21;
     maintainers = [ ];
     platforms = stdenv.lib.platforms.all;
   };
