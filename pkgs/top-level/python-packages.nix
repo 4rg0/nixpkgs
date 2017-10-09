@@ -291,6 +291,8 @@ in {
 
   sip = callPackage ../development/python-modules/sip { };
 
+  supervise_api = callPackage ../development/python-modules/supervise_api { };
+
   tables = callPackage ../development/python-modules/tables {
     hdf5 = pkgs.hdf5.override { zlib = pkgs.zlib; };
   };
@@ -776,12 +778,12 @@ in {
   in buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "awscli";
-    version = "1.11.108";
+    version = "1.11.162";
     namePrefix = "";
 
     src = fetchPypi {
       inherit pname version;
-      sha256 = "1wz76hkljc25zzfa2l5jv0mbr5vx6d9ixq4sq0p3zf3l45ql6mdf";
+      sha256 = "0ff17fdzzncrzl7ps1cyrs0c5f82ncbvflnjz8sd1vkcmn9yij8r";
     };
 
     # No tests included
@@ -2091,7 +2093,8 @@ in {
     buildInputs = [ pkgs.db ];
 
     # Judging from SyntaxError in test
-    disabled = isPy3k;
+#    disabled = isPy3k;
+    doCheck = false; # test suite breaks python3 compatibility
 
     # Path to database need to be set.
     # Somehow the setup.py flag is not propagated.
@@ -2145,13 +2148,13 @@ in {
 
   boto3 = buildPythonPackage rec {
     name = "boto3-${version}";
-    version = "1.4.4";
+    version = "1.4.7";
 
     src = pkgs.fetchFromGitHub {
       owner = "boto";
       repo  = "boto3";
       rev   = version;
-      sha256 = "1zngj38a2dmc02p3ha9crzv9k682f0zgyyfx1bgg8hwwrnggikwl";
+      sha256 = "0ca08xkkx6py08gqgn1aci9pklidwivxbvpwjv7623jr21avakdi";
     };
 
     propagatedBuildInputs = [ self.botocore self.jmespath self.s3transfer ] ++
@@ -2184,11 +2187,11 @@ in {
   botocore = buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "botocore";
-    version = "1.5.71";
+    version = "1.7.20";
 
     src = fetchPypi {
       inherit pname version;
-      sha256 = "1fgg28halsy4g43wjpkbd6l0wqiwyzkd4zjrzbbyzw4dxbsf3xfm";
+      sha256 = "16sy35bp9i2g9785l8jzcd4ddc2nydqs3wnkqwi36xx6l3bdbn13";
     };
 
     propagatedBuildInputs = with self; [
@@ -2355,25 +2358,7 @@ in {
     };
   };
 
-  devpi-common = buildPythonPackage rec {
-    name = "devpi-common";
-    version = "3.0.1";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/d/devpi-common/devpi-common-${version}.tar.gz";
-      sha256 = "0l3a7iyk596x6pvzg7604lzzi012qszr804fqn6f517zcy1xz23j";
-    };
-
-    propagatedBuildInputs = [ self.requests self.py ];
-
-    meta = {
-      homepage = https://bitbucket.org/hpk42/devpi;
-      description = "Utilities jointly used by devpi-server and devpi-client";
-      license = licenses.mit;
-      maintainers = with maintainers; [ lewo makefu ];
-    };
-  };
-
+  devpi-common = callPackage ../development/python-modules/devpi-common { };
   # A patched version of buildout, useful for buildout based development on Nix
   zc_buildout_nix = callPackage ../development/python-modules/buildout-nix { };
 
@@ -6179,13 +6164,13 @@ in {
       sha256 = "0i14bc67200zhzxc41g5dfp2m0pr1zaa2gv59p2va1xw0ji2dc0f";
     };
 
+    nativeBuildInputs = [ pkgs.pkgconfig ];
     buildInputs = with self; [
       nose
       pkgs.libjpeg
       pkgs.libpng
       pkgs.libtiff
       pkgs.libwebp
-      pkgs.pkgconfig
     ];
     propagatedBuildInputs = with self; [ numpy ];
 
@@ -7221,7 +7206,8 @@ in {
     };
 
     NIX_CFLAGS_COMPILE="-I${pkgs.poppler.dev}/include/poppler/";
-    buildInputs = [ pkgs.pkgconfig pkgs.poppler.dev ];
+    nativeBuildInputs = [ pkgs.pkgconfig ];
+    buildInputs = [ pkgs.poppler.dev ];
     propagatedBuildInputs = with self; [ pycairo pygobject2 ];
 
     patches = [
@@ -9489,7 +9475,8 @@ in {
       sha256 = "06rmp1ap6flh64m81j0n3a357ij2vj9zwcvvw0p31y6hz1id9shi";
     };
 
-    buildInputs = with self; [ pkgs.pkgconfig pkgs.fuse ];
+    nativeBuildInputs = [ pkgs.pkgconfig ];
+    buildInputs = with self; [ pkgs.fuse ];
 
     meta = {
       description = "Python bindings for FUSE";
@@ -11225,27 +11212,7 @@ in {
 
   linode-api = callPackage ../development/python-modules/linode-api { };
 
-  livereload = buildPythonPackage rec {
-    name = "livereload-${version}";
-    version = "2.5.0";
-
-    src = pkgs.fetchFromGitHub {
-      owner = "lepture";
-      repo = "python-livereload";
-      rev = "v${version}";
-      sha256 = "0ixsc7wibmkfk9fnyq0d1b5d9snxfpzzzgsxvq28rn54v6q8b7m2";
-    };
-
-    buildInputs = with self; [ nose django ];
-
-    propagatedBuildInputs = with self; [ tornado six ];
-
-    meta = {
-      description = "Runs a local server that reloads as you develop";
-      homepage = "https://github.com/lepture/python-livereload";
-      license = licenses.bsd3;
-    };
-  };
+  livereload = callPackage ../development/python-modules/livereload { };
 
   llfuse = buildPythonPackage rec {
     name = "llfuse-1.0";
@@ -11255,7 +11222,8 @@ in {
       sha256 = "1li7q04ljrvwharw4fblcbfhvk6s0l3lnv8yqb4c22lcgbkiqlps";
     };
 
-    buildInputs = with self; [ pytest pkgs.pkgconfig pkgs.fuse pkgs.attr pkgs.which ];
+    nativeBuildInputs = [ pkgs.pkgconfig ];
+    buildInputs = with self; [ pytest pkgs.fuse pkgs.attr pkgs.which ];
 
     propagatedBuildInputs = with self; [ contextlib2 ];
 
@@ -13201,7 +13169,8 @@ in {
         configure
     '';
 
-    buildInputs = with self; [ python pkgs.pkgconfig pkgs.libnotify pygobject2 pygtk pkgs.glib pkgs.gtk2 pkgs.dbus_glib ];
+    nativeBuildInputs = [ pkgs.pkgconfig ];
+    buildInputs = with self; [ python pkgs.libnotify pygobject2 pygtk pkgs.glib pkgs.gtk2 pkgs.dbus_glib ];
 
     postInstall = "cd $out/lib/python*/site-packages && ln -s gtk-*/pynotify .";
 
@@ -14167,17 +14136,19 @@ in {
 
   cmd2 = buildPythonPackage rec {
     name = "cmd2-${version}";
-    version = "0.6.8";
+    version = "0.7.7";
 
     src = pkgs.fetchurl {
       url = "mirror://pypi/c/cmd2/${name}.tar.gz";
-      sha256 = "1a346zcd46c8gwbbp2cxsmvgfkyy26kwxjzdnkv7n47w6660sy5c";
+      sha256 = "0widbir8ay1fd4zm8l0rjq78j1cvbammbz8xs32crbanqsgzpqml";
     };
 
     # No tests included
     doCheck = false;
 
     propagatedBuildInputs = with self; [
+      pyperclip
+      six
       pyparsing
     ];
 
@@ -15629,27 +15600,7 @@ in {
   };
 
   pika-pool = callPackage ../development/python-modules/pika-pool { };
-
-  platformio =  buildPythonPackage rec {
-    name = "platformio-${version}";
-    version="2.10.3";
-
-    disabled = isPy3k || isPyPy;
-
-    src = pkgs.fetchurl {
-      url = "https://pypi.python.org/packages/b7/a3/1d3a9d7bae91df1b607e0f31549ec3e0006f29484cc6a1431b3fe3c5b02e/platformio-2.10.3.tar.gz";
-      sha256 = "f3a646871f9baed05f336a32576edaab90abf0737d8adb54f2acb7bcad42a65f";
-     };
-
-     propagatedBuildInputs = with self; [ click_5 requests bottle pyserial lockfile colorama];
-
-     meta = with stdenv.lib; {
-     description = "An open source ecosystem for IoT development";
-     homepage = http://platformio.org;
-     maintainers = with maintainers; [ mog ];
-     license = licenses.asl20;
-     };
-  };
+  platformio = callPackage ../development/python-modules/platformio { };
 
   pylibconfig2 = buildPythonPackage rec {
     name = "pylibconfig2-${version}";
@@ -16498,7 +16449,8 @@ in {
       patchShebangs .
     '';
 
-    buildInputs = [ self.setuptools self.nose pkgs.pkgconfig pkgs.swig pkgs.libcdio ]
+    nativeBuildInputs = [ pkgs.pkgconfig ];
+    buildInputs = [ self.setuptools self.nose pkgs.swig pkgs.libcdio ]
       ++ stdenv.lib.optional stdenv.isDarwin pkgs.libiconv;
 
     patches = [ ../development/python-modules/pycdio/add-cdtext-toc.patch ];
@@ -16861,6 +16813,8 @@ in {
 
   pyshp = callPackage ../development/python-modules/pyshp { };
 
+  pysmbc = callPackage ../development/python-modules/pysmbc { };
+
   pyspread = callPackage ../development/python-modules/pyspread { };
 
   pyx = buildPythonPackage rec {
@@ -16873,7 +16827,7 @@ in {
     };
 
     disabled = !isPy3k;
-    
+
     # No tests in archive
     doCheck = false;
 
@@ -17200,7 +17154,7 @@ in {
       PATH="${pkgs.parted}/sbin:$PATH"
     '';
 
-    buildInputs = with self; [ pkgs.pkgconfig ];
+    nativeBuildInputs = [ pkgs.pkgconfig ];
 
     propagatedBuildInputs = with self; [ pkgs.parted ];
 
@@ -17793,11 +17747,12 @@ in {
   };
 
   pyopenssl = buildPythonPackage rec {
-    name = "pyopenssl-${version}";
+    pname = "pyOpenSSL";
+    name = "${pname}-${version}";
     version = "17.2.0";
 
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/p/pyOpenSSL/pyOpenSSL-${version}.tar.gz";
+    src = self.fetchPypi {
+      inherit pname version;
       sha256 = "0d283g4zi0hr9papd24mjl70mi15gyzq6fx618rizi87dgipqqax";
     };
 
@@ -17892,22 +17847,7 @@ in {
     };
   };
 
-  pyserial = buildPythonPackage rec {
-    name = "pyserial-2.7";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/p/pyserial/${name}.tar.gz";
-      sha256 = "3542ec0838793e61d6224e27ff05e8ce4ba5a5c5cc4ec5c6a3e8d49247985477";
-    };
-
-    doCheck = false;
-
-    meta = {
-      homepage = "http://pyserial.sourceforge.net/";
-      license = licenses.psfl;
-      description = "Python serial port extension";
-    };
-  };
+  pyserial = callPackage ../development/python-modules/pyserial {};
 
   pymongo = callPackage ../development/python-modules/pymongo {};
 
@@ -18182,8 +18122,9 @@ in {
       sha256 = "1svlwyl61rvbqbcbalkg6pbf38yjyv7qkq9sx4x35yk69lscaac2";
     };
 
+    nativeBuildInputs = [ pkgs.pkgconfig ];
     buildInputs = [
-      pkgs.pkgconfig pkgs.gtk2 self.pygtk pkgs.libxml2
+      pkgs.gtk2 self.pygtk pkgs.libxml2
       pkgs.libxslt pkgs.libsoup pkgs.webkitgtk24x-gtk2 pkgs.icu
     ];
 
@@ -19889,21 +19830,7 @@ in {
     };
   };
 
-  spambayes = buildPythonPackage rec {
-    name = "spambayes-1.1b1";
-
-    src = pkgs.fetchurl {
-      url = "mirror://sourceforge/spambayes/${name}.tar.gz";
-      sha256 = "0kqvjb89b02wp41p650ydfspi1s8d7akx1igcrw62diidqbxp04n";
-    };
-
-    propagatedBuildInputs = with self; [ bsddb3 pydns lockfile ];
-
-    meta = {
-      description = "Statistical anti-spam filter, initially based on the work of Paul Graham";
-      homepage = http://spambayes.sourceforge.net/;
-    };
-  };
+  spambayes = callPackage ../development/python-modules/spambayes { };
 
   shapely = callPackage ../development/python-modules/shapely { };
 
@@ -20347,7 +20274,8 @@ in {
       sha256 = "0zrjxvzxqm4bz2jcy8sras8jircgbs6dkrw8j3nc6jhvzlikwwxl";
     };
 
-    buildInputs = [ pkgs.pkgconfig self.pytest_28 self.pytestrunner ];
+    nativeBuildInputs = [ pkgs.pkgconfig ];
+    buildInputs = [ self.pytest_28 self.pytestrunner ];
     propagatedBuildInputs = [ self.cffi pkgs.secp256k1 ];
 
     # Tests are not included in archive
@@ -20372,22 +20300,7 @@ in {
     };
   };
 
-  semantic-version = buildPythonPackage rec {
-    pname = "semantic_version";
-    version = "2.4.2";
-    name = "${pname}${version}";
-
-    src = self.fetchPypi {
-      inherit pname version;
-      sha256 = "7e8b7fa74a3bc9b6e90b15b83b9bc2377c78eaeae3447516425f475d5d6932d2";
-    };
-
-    meta = {
-      description = "A library implementing the 'SemVer' scheme";
-      license = licenses.bsdOriginal;
-      maintainers = with maintainers; [ layus ];
-    };
-  };
+  semantic-version = callPackage ../development/python-modules/semantic-version { };
 
   sexpdata = buildPythonPackage rec {
     name = "sexpdata-0.0.2";
@@ -20432,8 +20345,9 @@ in {
       sha256 = "1q35kgz151rr99240jq55rs39y741m8shh9yihl3x95rkjxchji4";
     };
 
+    nativeBuildInputs = [ pkgs.pkgconfig ];
+    buildInputs = with pkgs; [ alsaLib ffmpeg libv4l sqlite libvpx ];
     propagatedBuildInputs = with self; [ cython pkgs.openssl dns dateutil xcaplib msrplib lxml python-otr ];
-    buildInputs = with pkgs; [ alsaLib ffmpeg libv4l pkgconfig sqlite libvpx ];
   };
 
 
@@ -20996,7 +20910,8 @@ in {
     src = pkgs.subunit.src;
 
     propagatedBuildInputs = with self; [ testtools testscenarios ];
-    buildInputs = [ pkgs.pkgconfig pkgs.check pkgs.cppunit ];
+    nativeBuildInputs = [ pkgs.pkgconfig ];
+    buildInputs = [ pkgs.check pkgs.cppunit ];
 
     patchPhase = ''
       sed -i 's/version=VERSION/version="${pkgs.subunit.version}"/' setup.py
@@ -24122,7 +24037,8 @@ EOF
       sha256 = "1l0s9cx38qb6x5xj32r531xap11m93c3gag30idj8fzkn74cpfgc";
     };
 
-    buildInputs = with self; [ python pkgs.pkgconfig pkgs.libvirt lxml ];
+    nativeBuildInputs = [ pkgs.pkgconfig ];
+    buildInputs = with self; [ python pkgs.libvirt lxml ];
 
     buildPhase = "${python.interpreter} setup.py build";
 
@@ -24261,7 +24177,8 @@ EOF
     preBuild = "${python}/bin/${python.executable} setup.py build_ext";
     installPhase= "${python}/bin/${python.executable} setup.py install --prefix=$out";
 
-    buildInputs = with self; [ pkgs.pkgconfig pkgs.enlightenment.efl ];
+    nativeBuildInputs = [ pkgs.pkgconfig ];
+    buildInputs = with self; [ pkgs.enlightenment.efl ];
     doCheck = false;
 
     meta = {

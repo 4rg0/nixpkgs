@@ -56,16 +56,14 @@ self: super: {
   clock = dontCheck super.clock;
   Dust-crypto = dontCheck super.Dust-crypto;
   hasql-postgres = dontCheck super.hasql-postgres;
-  hspec-expectations = dontCheck super.hspec-expectations;
   hspec = super.hspec.override { stringbuilder = dontCheck super.stringbuilder; };
+  hspec-core = super.hspec-core.override { silently = dontCheck super.silently; temporary = dontCheck super.temporary; };
+  hspec-expectations = dontCheck super.hspec-expectations;
   HTTP = dontCheck super.HTTP;
+  http-streams = dontCheck super.http-streams;
   nanospec = dontCheck super.nanospec;
   options = dontCheck super.options;
   statistics = dontCheck super.statistics;
-  http-streams = dontCheck super.http-streams;
-
-  # https://github.com/hspec/hspec/issues/330
-  hspec-core = dontCheck (super.hspec-core.override { silently = dontCheck super.silently; temporary = dontCheck super.temporary; });
 
   # segfault due to missing return: https://github.com/haskell/c2hs/pull/184
   c2hs = dontCheck super.c2hs;
@@ -100,7 +98,7 @@ self: super: {
       name = "git-annex-${drv.version}-src";
       url = "git://git-annex.branchable.com/";
       rev = "refs/tags/" + drv.version;
-      sha256 = "03fa03n4zkpj5z3ma1ahvnxd85dni2aikqayqf838jvfl7bd5b9n";
+      sha256 = "0ky3avbda1avccalkh7ifjnll37cjjmdyypw9m1glsrzgzmr5lbr";
     };
   })).override {
     dbus = if pkgs.stdenv.isLinux then self.dbus else null;
@@ -976,5 +974,8 @@ self: super: {
 
   # Break "hpack >=0.17.0 && <0.19".
   stack = doJailbreak super.stack;
+
+  # https://github.com/mgajda/json-autotype/issues/15
+  json-autotype = doJailbreak super.json-autotype;
 
 }
