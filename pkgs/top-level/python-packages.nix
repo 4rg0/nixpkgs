@@ -6313,6 +6313,8 @@ in {
     };
   };
 
+  jsmin = callPackage ../development/python-modules/jsmin { };
+
   jsonpatch = callPackage ../development/python-modules/jsonpatch { };
 
   jsonpointer = buildPythonPackage rec {
@@ -7045,6 +7047,8 @@ in {
   plaster-pastedeploy = callPackage ../development/python-modules/plaster-pastedeploy {};
 
   plotly = callPackage ../development/python-modules/plotly { };
+
+  plyfile = callPackage ../development/python-modules/plyfile { };
 
   podcastparser = callPackage ../development/python-modules/podcastparser { };
 
@@ -11613,25 +11617,7 @@ in {
     };
   });
 
-  MechanicalSoup = buildPythonPackage rec {
-    name = "MechanicalSoup-${version}";
-    version = "0.4.0";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/M/MechanicalSoup/${name}.zip";
-      sha256 = "02jkwly4gw1jqm55l4wwn0j0ggnysx55inw9j96bif5l49z5cacd";
-    };
-
-    propagatedBuildInputs = with self; [ requests beautifulsoup4 six ];
-
-    meta = {
-      description = "A Python library for automating interaction with websites";
-      homepage = https://github.com/hickford/MechanicalSoup;
-      license = licenses.mit;
-      maintainers = with maintainers; [ jgillich ];
-    };
-  };
-
+  MechanicalSoup = callPackage ../development/python-modules/MechanicalSoup/default.nix { };
 
   meld3 = buildPythonPackage rec {
     name = "meld3-1.0.0";
@@ -14997,6 +14983,8 @@ in {
 
   pandas = callPackage ../development/python-modules/pandas { };
 
+  pandas_0_17_1 = callPackage ../development/python-modules/pandas/0.17.1.nix { };
+
   xlrd = buildPythonPackage rec {
     name = "xlrd-${version}";
 
@@ -15601,6 +15589,8 @@ in {
 
   pika-pool = callPackage ../development/python-modules/pika-pool { };
   platformio = callPackage ../development/python-modules/platformio { };
+
+  kmsxx = callPackage ../development/libraries/kmsxx { };
 
   pylibconfig2 = buildPythonPackage rec {
     name = "pylibconfig2-${version}";
@@ -17593,6 +17583,8 @@ in {
       maintainers = with maintainers; [ goibhniu ];
     };
   };
+
+  pypcap = callPackage ../development/python-modules/pypcap {};
 
   pyplatec = buildPythonPackage rec {
     name = "PyPlatec-${version}";
@@ -20551,6 +20543,8 @@ in {
       platforms = platforms.unix;
     };
   });
+
+  guzzle_sphinx_theme = callPackage ../development/python-modules/guzzle_sphinx_theme { };
 
   sphinx-testing = callPackage ../development/python-modules/sphinx-testing { };
 
@@ -26528,6 +26522,8 @@ EOF
       sha256 = "1ad0mkixc0s86djwsvhp1qlvcfs25086nh0qw7bys49gz8shczzi";
     };
   };
+
+  yowsup = callPackage ../development/python-modules/yowsup { };
 
   wptserve = callPackage ../development/python-modules/wptserve { };
 
